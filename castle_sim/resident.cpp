@@ -32,6 +32,14 @@ void Resident::TakeDamage(int damage)
         std::cout << "[Resident] Ошибка: урон не может быть отрицательным\n";
         return;
     }
+
+    // Защита: житель не может получить урон, если уже мёртв
+    if (m_health <= 0)
+    {
+        std::cout << "[Resident] " << m_name << " уже мёртв\n";
+        return;
+    }
+
     m_health -= damage;
     if (m_health < 0)
     {
