@@ -1,0 +1,7 @@
+*.vcxproj 
+*.vcxproj.filters 
+*.slnx 
+.vs/ 
+x64/ 
+Debug/ 
+*.class 
