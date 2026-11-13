@@ -1,9 +1,9 @@
 #pragma once
 
-#include "resident.hpp"
+#include "BaseResident.hpp"
 #include <string>
 #include <vector>
-#include <memory> 
+#include <memory>
 
 class Barracks
 {
@@ -11,15 +11,15 @@ private:
     std::string m_name;
     int m_capacity;
 
-
-    std::vector<std::weak_ptr<Resident>> m_soldiers;
+    // Агрегация: храним слабые указатели на базовый класс
+    std::vector<std::weak_ptr<BaseResident>> m_soldiers;
 
 public:
     Barracks(const std::string& name, int capacity);
     ~Barracks();
 
-
-    bool Recruit(const std::shared_ptr<Resident>& resident);
+    // Принимаем shared_ptr на базовый класс
+    bool Recruit(const std::shared_ptr<BaseResident>& resident);
 
     void ReportStatus() const;
     int GetSoldierCount() const;

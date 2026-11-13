@@ -1,6 +1,6 @@
-#include "castle.hpp"
-#include "resident.hpp"
-
+#include "Castle.hpp"
+#include "Soldier.hpp"
+#include "Peasant.hpp"
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -11,60 +11,49 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
-    std::cout << "===== 1. UNIQUE_PTR (ЕДИНОЛИЧНОЕ ВЛАДЕНИЕ) =====\n";
+    std::cout << "===== 1. АБСТРАКТНЫЙ КЛАСС И НАСЛЕДНИКИ =====\n";
+    // BaseResident b("Иван"); // ОШИБКА! Нельзя создать абстрактный класс
+    auto soldier = std::make_shared<Soldier>("Иван", "Меч");
+    auto peasant = std::make_shared<Peasant>("Петр");
+
+    std::cout << "\nПрофессии:\n";
+    std::cout << soldier->GetName() << ": " << soldier->GetProfession() << "\n";
+    std::cout << peasant->GetName() << ": " << peasant->GetProfession() << "\n";
+
+    std::cout << "\nСтатический счетчик жителей: " << BaseResident::GetTotalResidents() << "\n";
+
+    std::cout << "\n===== 2. ВИРТУАЛЬНЫЙ ДЕСТРУКТОР =====\n";
     {
-        // Создаем объект через make_unique (без new)
-        std::unique_ptr<Resident> uniqueResident = std::make_unique<Resident>("Уникальный", Resident::Profession::eSoldier);
-        uniqueResident->TakeDamage(10);
+        std::cout << "-- Создаем через указатель на базу --\n";
+        std::unique_ptr<BaseResident> ptr = std::make_unique<Soldier>("Генерал", "Копье");
+    } // Здесь вызовется и деструктор Soldier, и деструктор BaseResident
 
-        std::cout << "Владельцев unique_ptr: 1 (копировать нельзя)\n";
-
-        // Передача владения через std::move
-        std::unique_ptr<Resident> movedResident = std::move(uniqueResident);
-
-        if (!uniqueResident) {
-            std::cout << "Владение передано! Исходный uniqueResident теперь пуст.\n";
-        }
-    } // Здесь сработает деструктор movedResident (delete вызовется автоматически)
-
-    std::cout << "\n===== 2. SHARED_PTR (СОВМЕСТНОЕ ВЛАДЕНИЕ) =====\n";
-    // Создаем Ивана (он будет жить долго)
-    std::shared_ptr<Resident> sharedIvan = std::make_shared<Resident>("Иван", Resident::Profession::eSoldier);
-    std::cout << "Владельцев Ивана: " << sharedIvan.use_count() << "\n"; // 1
-
+    std::cout << "\n===== 3. КОПИРОВАНИЕ (ГЛУБОКОЕ) =====\n";
     {
-        // Создаем Петра (он умрет в конце этого блока)
-        std::shared_ptr<Resident> sharedPetr = std::make_shared<Resident>("Пётр", Resident::Profession::eSoldier);
-        std::cout << "Владельцев Петра: " << sharedPetr.use_count() << "\n"; // 1
-
-        // Делаем копию указателя на Ивана
-        std::shared_ptr<Resident> copyIvan = sharedIvan;
-        std::cout << "Владельцев Ивана после копирования: " << sharedIvan.use_count() << "\n"; // 2
-    } // Блок заканчивается. Уничтожаются sharedPetr и copyIvan.
-
-    std::cout << "Владельцев Ивана после выхода из блока: " << sharedIvan.use_count() << "\n"; // 1
-
-    std::cout << "\n===== 3. WEAK_PTR И АГРЕГАЦИЯ =====\n";
-    Castle castle("Каменный", 1000, "Главная казарма", 2);
-
-    // Передаем Ивана в казарму (казарма сохранит weak_ptr)
-    castle.GetBarracks().Recruit(sharedIvan);
-
-    {
-        // Создаем Петра и сразу отдаем в казарму
-        std::shared_ptr<Resident> sharedPetr = std::make_shared<Resident>("Пётр", Resident::Profession::eSoldier);
-        castle.GetBarracks().Recruit(sharedPetr);
-
-        castle.GetBarracks().ReportStatus();
-        std::cout << "-> Выходим из блока. Пётр будет уничтожен, так как на него больше нет shared_ptr.\n";
+        Soldier original("Клон", "Топор");
+        Soldier copy = original; // Вызов конструктора копирования
+        std::cout << "Оригинал: " << original.Describe() << "\n";
+        std::cout << "Копия:    " << copy.Describe() << "\n";
     }
 
-    std::cout << "\nПроверяем казарму после смерти Петра (weak_ptr Петра станет пустым):\n";
-    castle.GetBarracks().ReportStatus();
+    std::cout << "\n===== 4. ПОЛИМОРФИЗМ (ВЫЗОВ ЧЕРЕЗ БАЗУ) =====\n";
+    std::vector<std::shared_ptr<BaseResident>> residents = { soldier, peasant };
+    for (const auto& r : residents)
+    {
+        r->Work(); // Вызовется своя версия для каждого!
+        std::cout << r->Describe() << "\n";
+    }
 
-    std::cout << "\n===== 4. УНИЧТОЖЕНИЕ ПОСЛЕДНЕГО ВЛАДЕЛЬЦА =====\n";
-    sharedIvan.reset(); // Уничтожаем последнего владельца Ивана
-    std::cout << "Иван уничтожен (счётчик shared_ptr стал 0).\n";
+    std::cout << "\n===== 5. СТРОКИ (std::string) =====\n";
+    std::string report = "Жители: " + soldier->GetName() + " и " + peasant->GetName();
+    std::cout << "Конкатенация: " << report << "\n";
+    std::cout << "Поиск 'Петр': " << (report.find("Петр") != std::string::npos ? "Найден" : "Не найден") << "\n";
+
+    std::cout << "\n===== 6. ИСПОЛЬЗОВАНИЕ КАЗАРМЫ (АГРЕГАЦИЯ) =====\n";
+    Castle castle("Каменный", 1000, "Главная казарма", 2);
+    castle.GetBarracks().Recruit(soldier);
+    castle.GetBarracks().Recruit(peasant);
+    castle.GetBarracks().ReportStatus();
 
     std::cout << "\n===== КОНЕЦ ПРОГРАММЫ =====\n";
     return 0;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "barracks.hpp"
-
+#include "BaseResident.hpp"
 #include <string>
 
 class Castle
