@@ -5,3 +5,8 @@
 x64/ 
 Debug/ 
 *.class 
+*.class 
+java/ 
+.vs/ 
+x64/ 
+FETCH_HEAD 
